@@ -1,51 +1,52 @@
 // index.js
-const weatherApi = "https://api.weather.gov/alerts/active?area=";
+// index.js
+const weatherApi = "https://api.weather.gov/alerts/active?area="
 
-// Your code here!
+// Get DOM elements
+const stateInput = document.getElementById('state-input');
+const fetchButton = document.getElementById('fetch-alerts');
+const alertsDisplay = document.getElementById('alerts-display');
+const errorMessage = document.getElementById('error-message');
 
-const button = document.getElementById("get-alerts");
-const input = document.getElementById("state-input");
-const display = document.getElementById("alerts-display");
-const errorBox = document.getElementById("error-message");
+// Add click event listener
+fetchButton.addEventListener('click', () => {
+  const stateAbbr = stateInput.value.trim();
 
-if (button) {
-  button.addEventListener("click", async () => {
-    const state = input.value.trim().toUpperCase();
+  // Clear error message
+  errorMessage.textContent = '';
+  errorMessage.classList.add('hidden');
 
-    try {
-      const response = await fetch(weatherApi + state);
+  // Clear previous alerts
+  alertsDisplay.innerHTML = '';
 
-      if (!response.ok) {
-        throw new Error("Network error");
-      }
+  // Fetch weather data
+  fetch(weatherApi + stateAbbr)
+    .then(response => response.json())
+    .then(data => {
+      // Extract title and alert count
+      const title = data.title;
+      const alertCount = data.features.length;
 
-      const data = await response.json();
+      // Display summary
+      const summary = document.createElement('h2');
+      summary.textContent =` ${title}: ${alertCount};`
+      alertsDisplay.appendChild(summary);
 
-      // clear error
-      errorBox.classList.add("hidden");
-      errorBox.textContent = "";
-
-      // clear old results
-      display.innerHTML = "";
-
-      const alerts = data.features;
-
-      // show count
-      display.textContent = `Weather Alerts: ${alerts.length}`;
-
-      // show alerts
-      alerts.forEach(alert => {
-        const p = document.createElement("p");
-        p.textContent = alert.properties.headline;
-        display.appendChild(p);
+      // Display alert headlines
+      const list = document.createElement('ul');
+      data.features.forEach(alert => {
+        const li = document.createElement('li');
+        li.textContent = alert.properties.headline;
+        list.appendChild(li);
       });
+      alertsDisplay.appendChild(list);
 
-    } catch (error) {
-      errorBox.classList.remove("hidden");
-      errorBox.textContent = error.message;
-    }
-
-    // clear input
-    input.value = "";
-  });
-}
+      // Clear input
+      stateInput.value = '';
+    })
+    .catch(error => {
+      // Display error message
+      errorMessage.textContent = error.message;
+      errorMessage.classList.remove('hidden');
+    });
+});
